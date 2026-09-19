@@ -1,10 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "reservas-cron",
-  "main": "src/index.ts",
+  "main": "workers/cron/src/index.ts",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
   // Resumen diario: 10:00 UTC = 07:00 en Argentina (UTC-3).
+  // Esta config vive en la raíz para que el bundler resuelva los imports
+  // compartidos de src/lib (digest, prisma, adapter).
   "triggers": {
     "crons": ["0 10 * * *"]
   },

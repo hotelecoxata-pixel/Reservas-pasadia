@@ -17,7 +17,7 @@
     "db:setup": "npm run db:deploy && npm run db:seed",
     "deploy:cf": "prisma generate && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "preview:cf": "prisma generate && opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy:cron": "wrangler deploy --config workers/cron/wrangler.jsonc",
+    "deploy:cron": "wrangler deploy --config wrangler.cron.jsonc",
     "db:up": "node scripts/dev-db.mjs up",
     "db:down": "node scripts/dev-db.mjs down",
     "db:status": "node scripts/dev-db.mjs status",

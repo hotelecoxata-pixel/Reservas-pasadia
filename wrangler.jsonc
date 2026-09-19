@@ -8,11 +8,9 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  // Resumen diario: 10:00 UTC = 07:00 en Argentina (UTC-3).
-  // Ajusta según la zona horaria del negocio (Cloudflare Cron siempre usa UTC).
-  "triggers": {
-    "crons": ["0 10 * * *"]
-  },
+  // El resumen diario lo ejecuta el worker dedicado "reservas-cron"
+  // (workers/cron/wrangler.jsonc): este worker OpenNext no expone
+  // handler `scheduled`, así que el Cron Trigger vive allí, no aquí.
   "observability": {
     "enabled": true
   }

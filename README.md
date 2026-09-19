@@ -58,7 +58,7 @@ npm run db:reset   # detiene y borra el cluster (datos de prueba)
 
 ## Notificación diaria
 
-- **Cron Trigger** (definido en `wrangler.jsonc`, horario en UTC — `0 10 * * *` = 07:00 ART) ejecuta `workers/cron`.
+- **Cron Trigger** (definido en `wrangler.cron.jsonc`, horario en UTC — `0 10 * * *` = 07:00 ART) ejecuta el worker dedicado `reservas-cron` (`workers/cron/`). La app principal no lleva trigger: el worker OpenNext no expone handler `scheduled`.
 - El resumen usa la misma lógica que la API (`src/lib/digest.ts`): arma el total del día por tipo y lo envía por **Resend** y **Telegram**.
 - Idempotente: la tabla `notification_log` (única por fecha+canal) evita envíos duplicados; los fallidos se reintentan en el próximo disparo.
 - Prueba manual desde `/admin` («Enviar resumen de hoy ahora») o con:
@@ -84,10 +84,10 @@ npm run db:reset   # detiene y borra el cluster (datos de prueba)
 3. **Worker de cron** (envía el resumen diario):
    ```bash
    npm run deploy:cron
-   npx wrangler secret put DATABASE_URL --config workers/cron/wrangler.jsonc
-   # + los secretos de Resend/Telegram que uses
+   npx wrangler secret put DATABASE_URL --config wrangler.cron.jsonc
+   # + los secretos de Resend/Telegram que uses (siempre con --config wrangler.cron.jsonc)
    ```
-4. **Git**: conectá el repo a Workers Builds (dashboard → tu Worker → Settings → Build) para despliegue automático por push. Ajustá el horario del cron en `wrangler.jsonc` (`triggers.crons`, siempre en UTC) y volvé a desplegar.
+4. **Git**: conectá el repo a Workers Builds (dashboard → tu Worker → Settings → Build) para despliegue automático por push. Ajustá el horario del cron en `wrangler.cron.jsonc` (`triggers.crons`, siempre en UTC) y volvé a desplegar.
 5. **Dominio propio**: dashboard → tu Worker → Custom Domains (si el dominio ya está en Cloudflare DNS, es un clic).
 
 ## Referencia de API (todas requieren sesión, cookie httpOnly)

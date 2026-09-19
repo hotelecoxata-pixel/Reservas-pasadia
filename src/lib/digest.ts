@@ -1,11 +1,14 @@
-import { prisma } from "./prisma";
+import type { PrismaClient } from "../generated/prisma/client";
 import { env } from "./env";
 import { fromDateKey, todayKey } from "./dates";
 
 /**
  * Núcleo del resumen diario, compartido entre:
- *  - la API de Next.js (/api/cron/daily-digest, para pruebas manuales)
+ *  - la API de Next.js (/api/cron/daily-digest, /api/admin/test-digest)
  *  - el Worker de cron de Cloudflare (workers/cron)
+ *
+ * Recibe el cliente Prisma por inyección (los runtimes de Next y del Worker
+ * de cron necesitan clientes generados distintos).
  *
  * Idempotencia: la tabla NotificationLog tiene unique(digestDate, channel),
  * así que aunque el cron se dispare dos veces no se envía el resumen duplicado.
@@ -33,7 +36,10 @@ function targetDate(dateKey?: string): { key: string; date: Date } {
 }
 
 /** Reúne los datos del día y arma el resumen (sin enviar nada). */
-export async function buildDigest(dateKey?: string): Promise<DigestResult> {
+export async function buildDigest(
+  prisma: PrismaClient,
+  dateKey?: string,
+): Promise<DigestResult> {
   const { key, date } = targetDate(dateKey);
 
   const [eventTypes, reservations] = await Promise.all([
@@ -171,9 +177,9 @@ export async function sendTelegramDigest(digest: DigestResult): Promise<{ ok: bo
  * Orquesta: arma el resumen, envía por los canales configurados y registra en NotificationLog.
  * Idempotente: si ya existe un registro SENT para (fecha, canal), no reenvía.
  */
-export async function runDailyDigest(dateKey?: string): Promise<DigestResult> {
+export async function runDailyDigest(prisma: PrismaClient, dateKey?: string): Promise<DigestResult> {
   const { key } = targetDate(dateKey);
-  const digest = await buildDigest(dateKey);
+  const digest = await buildDigest(prisma, dateKey);
 
   const channels: DigestResult["channels"] = [];
 

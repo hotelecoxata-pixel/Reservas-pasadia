@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { handle, jsonError, jsonOk } from "@/lib/api";
 import { env } from "@/lib/env";
 import { runDailyDigest } from "@/lib/digest";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Resumen diario manual (para probar sin esperar al cron).
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const dateKey = request.nextUrl.searchParams.get("date") ?? undefined;
-    const result = await runDailyDigest(dateKey);
+    const result = await runDailyDigest(prisma, dateKey);
     return jsonOk(result);
   });
 }

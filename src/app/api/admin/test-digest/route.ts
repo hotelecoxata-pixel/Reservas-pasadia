@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 
 import { handle, jsonOk, requireAdminUser } from "@/lib/api";
 import { runDailyDigest } from "@/lib/digest";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Envía ahora mismo el resumen del día (o de ?date=YYYY-MM-DD).
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
   return handle(async () => {
     await requireAdminUser();
     const dateKey = request.nextUrl.searchParams.get("date") ?? undefined;
-    const result = await runDailyDigest(dateKey);
+    const result = await runDailyDigest(prisma, dateKey);
     return jsonOk(result);
   });
 }
