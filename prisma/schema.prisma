@@ -1,0 +1,110 @@
+// Sistema de Reservas — Grupos, Pasadías y Spa
+// Prisma 7: generador "prisma-client" con salida a src/generated/prisma.
+// runtime "nodejs": funciona en Node (dev/tsx) y en Cloudflare Workers vía
+// OpenNext (nodejs_compat). Requiere asyncWebAssembly en webpack (next.config.ts).
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  // "ts" evita problemas de resolución .js→.ts en webpack/Next y es lo
+  // recomendado para correr el seed con tsx.
+  importFileExtension    = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Tipo de evento (GRUPOS, PASADIA, SPA) con su cupo máximo por día.
+model EventType {
+  id               String   @id @default(cuid())
+  code             String   @unique // GRUPOS | PASADIA | SPA
+  name             String
+  color            String   @default("#6366f1") // color del evento en el calendario
+  dailyMaxCapacity Int      @default(1) @map("daily_max_capacity")
+  active           Boolean  @default(true)
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  reservations Reservation[]
+
+  @@map("event_types")
+}
+
+/// Reserva de un evento para un cliente en una fecha y horario.
+model Reservation {
+  id             String            @id @default(cuid())
+  customerName   String            @map("customer_name")
+  customerPhone  String?           @map("customer_phone")
+  customerEmail  String?           @map("customer_email")
+  eventTypeId    String            @map("event_type_id")
+  date           DateTime          @db.Date // día del evento (sin hora)
+  startTime      String            @map("start_time") // "09:00" (HH:mm)
+  endTime        String?           @map("end_time") // "11:00" (opcional)
+  peopleCount    Int               @default(1) @map("people_count")
+  notes          String?
+  status         ReservationStatus @default(CONFIRMED)
+  createdById    String?           @map("created_by_id")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  eventType EventType @relation(fields: [eventTypeId], references: [id], onDelete: Restrict)
+  createdBy User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@index([eventTypeId, date, status])
+  @@map("reservations")
+}
+
+/// Usuario del personal con acceso al sistema.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(STAFF)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  reservations Reservation[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+/// Registro de envíos del resumen diario (evita duplicados).
+model NotificationLog {
+  id         String              @id @default(cuid())
+  digestDate DateTime            @db.Date @map("digest_date") // fecha que resume
+  channel    NotificationChannel
+  status     NotificationStatus
+  detail     String?             // info del error, si falló
+  sentAt     DateTime            @default(now()) @map("sent_at")
+
+  @@unique([digestDate, channel])
+  @@map("notification_log")
+}
+
+enum NotificationChannel {
+  EMAIL
+  TELEGRAM
+}
+
+enum NotificationStatus {
+  SENT
+  FAILED
+}

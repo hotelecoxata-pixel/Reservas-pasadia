@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 antialiased;
+}
+
+/* Ajustes finos de FullCalendar */
+.fc .fc-toolbar-title {
+  @apply text-xl font-semibold text-slate-800;
+}
+
+.fc .fc-button-primary {
+  @apply rounded-md border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  @apply border-slate-400 bg-slate-200 text-slate-900;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  @apply bg-indigo-50;
+}
+
+.fc .fc-event {
+  @apply cursor-pointer border-0 rounded-md;
+}
+
+.fc .fc-daygrid-day-number,
+.fc .fc-col-header-cell-cushion {
+  @apply text-slate-700 no-underline;
+}

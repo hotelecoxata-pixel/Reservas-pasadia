@@ -1,0 +1,16 @@
+import type { Metadata } from "next";
+
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Reservas — Grupos, Pasadías y Spa",
+  description: "Gestión de reservas de eventos con calendario, cupos y notificaciones diarias.",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="es">
+      <body>{children}</body>
+    </html>
+  );
+}

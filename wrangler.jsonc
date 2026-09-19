@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "reservas-app",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Resumen diario: 10:00 UTC = 07:00 en Argentina (UTC-3).
+  // Ajusta según la zona horaria del negocio (Cloudflare Cron siempre usa UTC).
+  "triggers": {
+    "crons": ["0 10 * * *"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "name": "reservas-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev-db.mjs up && next dev",
+    "build": "next build",
+    "prebuild": "prisma generate",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prisma:generate": "prisma generate",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:setup": "npm run db:deploy && npm run db:seed",
+    "deploy:cf": "prisma generate && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "preview:cf": "prisma generate && opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cron": "wrangler deploy --config workers/cron/wrangler.jsonc",
+    "db:up": "node scripts/dev-db.mjs up",
+    "db:down": "node scripts/dev-db.mjs down",
+    "db:status": "node scripts/dev-db.mjs status",
+    "db:reset": "node scripts/dev-db.mjs reset"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-neon": "^7.10.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "animejs": "^4.5.0",
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.12",
+    "next": "15.5.25",
+    "pg": "^8.16.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "resend": "^4.8.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260919.1",
+    "@eslint/eslintrc": "^3.3.1",
+    "@fullcalendar/core": "^6.1.0",
+    "@fullcalendar/daygrid": "^6.1.0",
+    "@fullcalendar/interaction": "^6.1.0",
+    "@fullcalendar/react": "^6.1.0",
+    "@fullcalendar/timegrid": "^6.1.0",
+    "@opennextjs/cloudflare": "^1.4.0",
+    "@prisma/config": "^7.10.0",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^24.0.0",
+    "dotenv": "^16.6.1",
+    "embedded-postgres": "^18.4.0-beta.17",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "15.5.25",
+    "postcss": "^8.5.0",
+    "prisma": "^7.10.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.26.0"
+  },
+  "overrides": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0"
+  }
+}
