@@ -28,7 +28,7 @@ export default async function AdminPage() {
       eventTypes={eventTypes}
       users={users.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }))}
       currentUserId={session.id}
-      channels={{ email: env.emailConfigured, telegram: env.telegramConfigured }}
+      channels={{ email: env.emailConfigured, telegram: env.telegramConfigured, whatsapp: env.whatsappConfigured }}
     />
   );
 }

@@ -27,7 +27,7 @@ export type DigestResult = {
   date: string;
   total: number;
   lines: DigestLine[];
-  channels: { channel: "EMAIL" | "TELEGRAM"; ok: boolean; detail?: string }[];
+  channels: { channel: "EMAIL" | "TELEGRAM" | "WHATSAPP"; ok: boolean; detail?: string }[];
 };
 
 function targetDate(dateKey?: string): { key: string; date: Date } {
@@ -123,6 +123,18 @@ export function renderDigestHtml(digest: DigestResult): string {
   </div>`;
 }
 
+/** Render para WhatsApp: usa el formato de texto enriquecido de WhatsApp (*negrita*), sin HTML. */
+export function renderWhatsappDigest(digest: DigestResult): string {
+  const header = `*Resumen del ${digest.date}: ${digest.total} evento(s) en total*`;
+  const lines = digest.lines
+    .filter((l) => l.count > 0 || l.capacity > 0)
+    .map((l) => {
+      const detail = l.reservations.map((r) => `   • ${r.time} — ${r.customerName} (${r.peopleCount} pax)`).join("\n");
+      return `*${l.name}*: ${l.count}/${l.capacity}${l.reservations.length ? "\n" + detail : ""}`;
+    });
+  return [header, ...lines].join("\n");
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 }
@@ -173,47 +185,96 @@ export async function sendTelegramDigest(digest: DigestResult): Promise<{ ok: bo
   }
 }
 
+type DigestChannel = DigestResult["channels"][number]["channel"];
+type ChannelOutcome = DigestResult["channels"][number];
+
 /**
- * Orquesta: arma el resumen, envía por los canales configurados y registra en NotificationLog.
+ * Envía por un canal y registra el resultado en NotificationLog.
  * Idempotente: si ya existe un registro SENT para (fecha, canal), no reenvía.
  */
+async function sendAndLog(
+  prisma: PrismaClient,
+  digestDate: Date,
+  channel: DigestChannel,
+  digest: DigestResult,
+  send: (d: DigestResult) => Promise<{ ok: boolean; detail?: string }>,
+): Promise<ChannelOutcome> {
+  const alreadySent = await prisma.notificationLog.findUnique({
+    where: { digestDate_channel: { digestDate, channel } },
+  });
+  if (alreadySent?.status === "SENT") {
+    return { channel, ok: true, detail: "ya enviado anteriormente (omitido)" };
+  }
+  const result = await send(digest);
+  await prisma.notificationLog.upsert({
+    where: { digestDate_channel: { digestDate, channel } },
+    create: { digestDate, channel, status: result.ok ? "SENT" : "FAILED", detail: result.detail },
+    update: { status: result.ok ? "SENT" : "FAILED", detail: result.detail, sentAt: new Date() },
+  });
+  return { channel, ...result };
+}
+
+/**
+ * Envía por WhatsApp Cloud API de Meta (si está configurado).
+ * Requiere: WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID y WHATSAPP_TO_NUMBERS.
+ */
+export async function sendWhatsappDigest(digest: DigestResult): Promise<{ ok: boolean; detail?: string }> {
+  if (!env.whatsappConfigured) {
+    return { ok: false, detail: "WHATSAPP no configurado (WHATSAPP_TOKEN / WHATSAPP_PHONE_NUMBER_ID / WHATSAPP_TO_NUMBERS)" };
+  }
+  try {
+    const url = `https://graph.facebook.com/v21.0/${env.whatsappPhoneNumberId}/messages`;
+    let failures = 0;
+    let lastDetail: string | undefined;
+
+    for (const to of env.whatsappToNumbers) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.whatsappToken}`,
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to,
+            type: "text",
+            text: { preview_url: false, body: renderWhatsappDigest(digest) },
+          }),
+        });
+        if (!response.ok) {
+          failures++;
+          lastDetail = `WhatsApp API ${response.status} (→${to}): ${(await response.text()).slice(0, 300)}`;
+        }
+      } catch (error) {
+        failures++;
+        lastDetail = `WhatsApp (→${to}): ${error instanceof Error ? error.message : String(error)}`;
+      }
+    }
+
+    if (failures > 0) {
+      return { ok: false, detail: `${failures}/${env.whatsappToNumbers.length} envíos fallaron. ${lastDetail ?? ""}` };
+    }
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, detail: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * Orquesta: arma el resumen, envía por los canales configurados y registra en NotificationLog.
+ * Agregar un canal nuevo = agregar su línea acá.
+ */
 export async function runDailyDigest(prisma: PrismaClient, dateKey?: string): Promise<DigestResult> {
-  const { key } = targetDate(dateKey);
+  const { key, date } = targetDate(dateKey);
   const digest = await buildDigest(prisma, dateKey);
 
-  const channels: DigestResult["channels"] = [];
-
-  // ---- Email ----
-  const emailAlreadySent = await prisma.notificationLog.findUnique({
-    where: { digestDate_channel: { digestDate: fromDateKey(key), channel: "EMAIL" } },
-  });
-  if (emailAlreadySent?.status === "SENT") {
-    channels.push({ channel: "EMAIL", ok: true, detail: "ya enviado anteriormente (omitido)" });
-  } else {
-    const result = await sendEmailDigest(digest);
-    channels.push({ channel: "EMAIL", ...result });
-    await prisma.notificationLog.upsert({
-      where: { digestDate_channel: { digestDate: fromDateKey(key), channel: "EMAIL" } },
-      create: { digestDate: fromDateKey(key), channel: "EMAIL", status: result.ok ? "SENT" : "FAILED", detail: result.detail },
-      update: { status: result.ok ? "SENT" : "FAILED", detail: result.detail, sentAt: new Date() },
-    });
-  }
-
-  // ---- Telegram ----
-  const tgAlreadySent = await prisma.notificationLog.findUnique({
-    where: { digestDate_channel: { digestDate: fromDateKey(key), channel: "TELEGRAM" } },
-  });
-  if (tgAlreadySent?.status === "SENT") {
-    channels.push({ channel: "TELEGRAM", ok: true, detail: "ya enviado anteriormente (omitido)" });
-  } else {
-    const result = await sendTelegramDigest(digest);
-    channels.push({ channel: "TELEGRAM", ...result });
-    await prisma.notificationLog.upsert({
-      where: { digestDate_channel: { digestDate: fromDateKey(key), channel: "TELEGRAM" } },
-      create: { digestDate: fromDateKey(key), channel: "TELEGRAM", status: result.ok ? "SENT" : "FAILED", detail: result.detail },
-      update: { status: result.ok ? "SENT" : "FAILED", detail: result.detail, sentAt: new Date() },
-    });
-  }
+  const channels = await Promise.all([
+    sendAndLog(prisma, date, "EMAIL", digest, sendEmailDigest),
+    sendAndLog(prisma, date, "TELEGRAM", digest, sendTelegramDigest),
+    sendAndLog(prisma, date, "WHATSAPP", digest, sendWhatsappDigest),
+  ]);
 
   return { ...digest, channels };
 }

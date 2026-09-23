@@ -21,7 +21,9 @@
     "db:up": "node scripts/dev-db.mjs up",
     "db:down": "node scripts/dev-db.mjs down",
     "db:status": "node scripts/dev-db.mjs status",
-    "db:reset": "node scripts/dev-db.mjs reset"
+    "db:reset": "node scripts/dev-db.mjs reset",
+    "secrets:push": "node scripts/push-secrets.mjs",
+    "digest:now": "tsx scripts/digest-now.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

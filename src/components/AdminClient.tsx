@@ -11,7 +11,7 @@ type Props = {
   eventTypes: EventTypeDTO[];
   users: UserDTO[];
   currentUserId: string;
-  channels: { email: boolean; telegram: boolean };
+  channels: { email: boolean; telegram: boolean; whatsapp: boolean };
 };
 
 type DigestResult = {
@@ -318,7 +318,7 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
 
 /* ---------------- Notificaciones ---------------- */
 
-function NotificationsPanel({ channels }: { channels: { email: boolean; telegram: boolean } }) {
+function NotificationsPanel({ channels }: { channels: { email: boolean; telegram: boolean; whatsapp: boolean } }) {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<DigestResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -378,6 +378,14 @@ function NotificationsPanel({ channels }: { channels: { email: boolean; telegram
         >
           <Icon name="paper-plane" size={14} />
           Telegram: {channels.telegram ? "configurado" : "sin configurar"}
+        </span>
+        <span
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1 font-medium ${
+            channels.whatsapp ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          <Icon name="whatsapp" size={14} />
+          WhatsApp: {channels.whatsapp ? "configurado" : "sin configurar"}
         </span>
       </div>
 

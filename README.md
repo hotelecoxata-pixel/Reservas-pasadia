@@ -1,6 +1,6 @@
 # Sistema de Reservas — Grupos, Pasadías y Spa
 
-Aplicación web interna para gestionar reservas de eventos con **calendario visual**, **cupos configurables por tipo de evento y día**, **alta/baja/modificación de reservas** y **resumen diario automático** (correo + Telegram) con el total de eventos del día.
+Aplicación web interna para gestionar reservas de eventos con **calendario visual**, **cupos configurables por tipo de evento y día**, **alta/baja/modificación de reservas** y **resumen diario automático** (correo + Telegram + WhatsApp) con el total de eventos del día.
 
 ## Stack
 
@@ -8,7 +8,8 @@ Aplicación web interna para gestionar reservas de eventos con **calendario visu
 - **FullCalendar** (vistas mes / semana / día)
 - **Prisma** (driver adapter `pg`) sobre **PostgreSQL en Neon**
 - Sesiones con **JWT firmado en cookie** (jose) + roles ADMIN / STAFF
-- **Resend** (correo) y **Telegram Bot** (mensajería) para el resumen diario
+- **Comentarios** por reserva (hilo interno del personal) y **soportes de pago en imagen** (PNG/JPG/WebP hasta 5 MB, visor integrado, eliminación solo para admins)
+- **Resend** (correo), **Telegram Bot** y **WhatsApp Cloud API** (Meta) para el resumen diario
 - **Cloudflare Workers** (vía adaptador OpenNext) + **Cron Triggers** nativos
 
 ## Estructura
@@ -59,7 +60,7 @@ npm run db:reset   # detiene y borra el cluster (datos de prueba)
 ## Notificación diaria
 
 - **Cron Trigger** (definido en `wrangler.cron.jsonc`, horario en UTC — `0 10 * * *` = 07:00 ART) ejecuta el worker dedicado `reservas-cron` (`workers/cron/`). La app principal no lleva trigger: el worker OpenNext no expone handler `scheduled`.
-- El resumen usa la misma lógica que la API (`src/lib/digest.ts`): arma el total del día por tipo y lo envía por **Resend** y **Telegram**.
+- El resumen usa la misma lógica que la API (`src/lib/digest.ts`): arma el total del día por tipo y lo envía por **Resend**, **Telegram** y **WhatsApp**.
 - Idempotente: la tabla `notification_log` (única por fecha+canal) evita envíos duplicados; los fallidos se reintentan en el próximo disparo.
 - Prueba manual desde `/admin` («Enviar resumen de hoy ahora») o con:
   ```bash
@@ -77,7 +78,8 @@ npm run db:reset   # detiene y borra el cluster (datos de prueba)
    npx wrangler secret put AUTH_SECRET
    npx wrangler secret put CRON_SECRET
    # (opcional) RESEND_API_KEY, DIGEST_FROM_EMAIL, DIGEST_TO_EMAILS,
-   #            TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+   #            TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
+   #            WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_TO_NUMBERS
    npx prisma migrate deploy   # aplica el esquema a la base de producción
    npm run db:seed
    ```
@@ -85,8 +87,24 @@ npm run db:reset   # detiene y borra el cluster (datos de prueba)
    ```bash
    npm run deploy:cron
    npx wrangler secret put DATABASE_URL --config wrangler.cron.jsonc
-   # + los secretos de Resend/Telegram que uses (siempre con --config wrangler.cron.jsonc)
+   # + los secretos de Resend/Telegram/WhatsApp que uses (siempre con --config wrangler.cron.jsonc)
    ```
+
+   **Atajo**: pega las credenciales en el `.env` local y ejecuta `npm run secrets:push`
+   (sube automáticamente a ambos workers todo lo que haya en el `.env`; nunca sube la
+   URL de la BD embebida local). Con `-- --dry` muestra lo que haría sin subir nada.
+
+### Probar el envío real del resumen
+
+Con la BD embebida activa (`npm run db:up`) y las credenciales en el `.env`:
+
+```bash
+npm run digest:now          # envía el resumen de HOY por los canales configurados
+npm run digest:now 2026-09-21   # o de una fecha puntual
+```
+
+Cada canal reporta `OK` o el error exacto (token inválido, chat_id equivocado, etc.).
+Los canales sin credenciales se marcan como omitidos y no afectan a los demás.
 4. **Git**: conectá el repo a Workers Builds (dashboard → tu Worker → Settings → Build) para despliegue automático por push. Ajustá el horario del cron en `wrangler.cron.jsonc` (`triggers.crons`, siempre en UTC) y volvé a desplegar.
 5. **Dominio propio**: dashboard → tu Worker → Custom Domains (si el dominio ya está en Cloudflare DNS, es un clic).
 

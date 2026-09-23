@@ -67,9 +67,45 @@ model Reservation {
   eventType EventType @relation(fields: [eventTypeId], references: [id], onDelete: Restrict)
   createdBy User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  comments    ReservationComment[]
+  attachments ReservationAttachment[]
+
   @@index([date])
   @@index([eventTypeId, date, status])
   @@map("reservations")
+}
+
+/// Comentario interno en el hilo de una reserva.
+model ReservationComment {
+  id            String   @id @default(cuid())
+  reservationId String   @map("reservation_id")
+  authorId      String?  @map("author_id")
+  body          String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  author      User?       @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([reservationId, createdAt])
+  @@map("reservation_comments")
+}
+
+/// Imagen adjunta a una reserva (p. ej. soporte/comprobante de pago).
+model ReservationAttachment {
+  id            String   @id @default(cuid())
+  reservationId String   @map("reservation_id")
+  filename      String // nombre original del archivo
+  mimeType      String   @map("mime_type") // image/png | image/jpeg | image/webp
+  sizeBytes     Int      @map("size_bytes")
+  data          Bytes // contenido binario de la imagen
+  uploadedById  String?  @map("uploaded_by_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  uploadedBy  User?       @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([reservationId])
+  @@map("reservation_attachments")
 }
 
 /// Usuario del personal con acceso al sistema.
@@ -84,6 +120,8 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   reservations Reservation[]
+  commentsWritten     ReservationComment[]   @relation("CommentAuthor")
+  attachmentsUploaded ReservationAttachment[] @relation("AttachmentUploader")
 
   @@map("users")
 }
@@ -114,6 +152,8 @@ model NotificationLog {
 enum NotificationChannel {
   EMAIL
   TELEGRAM
+  // WhatsApp Cloud API de Meta
+  WHATSAPP
 }
 
 enum NotificationStatus {

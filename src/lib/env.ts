@@ -44,6 +44,23 @@ export const env = {
   get telegramChatId(): string | undefined {
     return getEnv("TELEGRAM_CHAT_ID");
   },
+  /** Token permanente de la WhatsApp Cloud API (Meta for Developers). */
+  get whatsappToken(): string | undefined {
+    return getEnv("WHATSAPP_TOKEN");
+  },
+  /** Número de teléfono remitente (Phone Number ID del panel de Meta). */
+  get whatsappPhoneNumberId(): string | undefined {
+    return getEnv("WHATSAPP_PHONE_NUMBER_ID");
+  },
+  /** Destinatarios: números con código de país, sin "+" ni espacios (ej: 5491100000000), separados por coma. */
+  get whatsappToNumbers(): string[] {
+    const raw = getEnv("WHATSAPP_TO_NUMBERS");
+    if (!raw) return [];
+    return raw
+      .split(",")
+      .map((s) => s.replace(/[^0-9]/g, ""))
+      .filter(Boolean);
+  },
   get cronSecret(): string | undefined {
     return getEnv("CRON_SECRET");
   },
@@ -53,5 +70,8 @@ export const env = {
   },
   get telegramConfigured(): boolean {
     return Boolean(this.telegramBotToken && this.telegramChatId);
+  },
+  get whatsappConfigured(): boolean {
+    return Boolean(this.whatsappToken && this.whatsappPhoneNumberId && this.whatsappToNumbers.length > 0);
   },
 };

@@ -6,6 +6,7 @@ import { api } from "@/lib/apiClient";
 import { fieldsIn, modalIn, modalOut, shake, successPop } from "@/lib/motion";
 import type { EventTypeDTO, ReservationDTO } from "@/lib/types";
 import Icon from "./icons";
+import ReservationExtras from "./ReservationExtras";
 
 type Props = {
   open: boolean;
@@ -36,6 +37,10 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [status, setStatus] = useState<"CONFIRMED" | "CANCELLED">("CONFIRMED");
+  /** Id de la reserva recién creada: habilita comentarios/adjuntos sin cerrar el modal. */
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  /** Se incrementa al guardar para recargar comentarios/adjuntos. */
+  const [extrasRevision, setExtrasRevision] = useState(0);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -47,6 +52,7 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
     if (!open) return;
     setError(null);
     setSaved(false);
+    setCreatedId(null);
     modalIn(overlayRef.current, panelRef.current);
     fieldsIn(panelRef.current?.querySelectorAll("[data-field]"));
 
@@ -83,6 +89,8 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
   }
 
   function handleClose() {
+    // Si se acaba de crear una reserva, refrescar el calendario al cerrar.
+    if (!reservation && createdId) onSaved();
     modalOut(overlayRef.current, panelRef.current, onClose);
   }
 
@@ -93,15 +101,23 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
     try {
       if (reservation) {
         await api(`/api/reservations/${reservation.id}`, { method: "PATCH", json: { ...form, status } });
+        setSaved(true);
+        successPop(saveBtnRef.current);
+        setTimeout(() => {
+          onSaved();
+          onClose();
+        }, 450);
       } else {
-        await api("/api/reservations", { method: "POST", json: form });
+        const { reservation: created } = await api<{ reservation: ReservationDTO }>("/api/reservations", {
+          method: "POST",
+          json: form,
+        });
+        setCreatedId(created.id);
+        setExtrasRevision((r) => r + 1);
+        setSaved(true);
+        successPop(saveBtnRef.current);
+        // No se cierra: el modal pasa a mostrar comentarios y soportes de pago.
       }
-      setSaved(true);
-      successPop(saveBtnRef.current);
-      setTimeout(() => {
-        onSaved();
-        onClose();
-      }, 450);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
     } finally {
@@ -150,7 +166,7 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
     >
       <div
         ref={panelRef}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
+        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between">
@@ -168,7 +184,7 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id="reservation-form" onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2" data-field>
               <label className="block text-sm font-medium text-slate-700">Cliente *</label>
@@ -343,6 +359,15 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
             </div>
           </div>
         </form>
+
+        {(reservation || createdId) && (
+          <div className="mt-6 border-t border-slate-200 pt-4">
+            <ReservationExtras
+              reservationId={reservation?.id ?? createdId}
+              revision={extrasRevision}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
