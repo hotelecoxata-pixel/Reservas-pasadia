@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen">
       <TopBar user={session} />
-      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-3 pb-24 py-4 sm:px-4 sm:pb-6 sm:py-6">{children}</main>
     </div>
   );
 }

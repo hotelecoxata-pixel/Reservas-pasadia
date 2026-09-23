@@ -161,12 +161,12 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
       onMouseDown={handleClose}
     >
       <div
         ref={panelRef}
-        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
+        className="max-h-[92dvh] w-full max-w-xl overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl sm:max-h-[90vh] sm:rounded-xl sm:p-6"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between">
@@ -185,7 +185,7 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
         </div>
 
         <form id="reservation-form" onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
             <div className="col-span-2" data-field>
               <label className="block text-sm font-medium text-slate-700">Cliente *</label>
               <input
@@ -305,15 +305,15 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
             </p>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-            <div className="flex gap-2">
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row">
               {reservation && (
                 <>
                   <button
                     type="button"
                     onClick={toggleStatus}
                     disabled={saving}
-                    className="flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50 sm:py-2"
                   >
                     <Icon name={status === "CONFIRMED" ? "xmark-circle" : "checkmark-circle"} size={14} />
                     {status === "CONFIRMED" ? "Cancelar reserva" : "Reactivar"}
@@ -322,7 +322,7 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
                     type="button"
                     onClick={handleDelete}
                     disabled={saving}
-                    className="flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 sm:py-2"
                   >
                     <Icon name="trash" size={14} />
                     Eliminar
@@ -330,11 +330,11 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
                 </>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                className="rounded-md border border-slate-300 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 sm:py-2"
               >
                 Cerrar
               </button>
@@ -342,7 +342,7 @@ export default function ReservationModal({ open, eventTypes, reservation, initia
                 ref={saveBtnRef}
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 sm:py-2"
               >
                 {saved ? (
                   <>

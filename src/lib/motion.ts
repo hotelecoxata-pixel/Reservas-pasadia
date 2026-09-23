@@ -11,6 +11,24 @@ export { animate, stagger };
 
 const EASE_OUT = "out(3)";
 
+type AnimTargets = Element | Element[] | NodeList | null | undefined;
+
+/**
+ * Limpia transforms inline al terminar una animación.
+ * Crítico: un ancestor con transform se vuelve el containing block de los
+ * `position: fixed` descendientes (el modal quedaría confinado al contenedor
+ * animado en vez de cubrir el viewport).
+ */
+function clearInlineTransforms(targets: AnimTargets) {
+  if (!targets) return;
+  const list: Element[] = targets instanceof Element ? [targets] : Array.from(targets as Iterable<Element>);
+  for (const el of list) {
+    const html = el as HTMLElement;
+    html.style.transform = "";
+    html.style.willChange = "";
+  }
+}
+
 /** Entrada suave de una página/sección: fade + slide-up. */
 export function pageEnter(el: Element | null) {
   if (!el) return;
@@ -19,10 +37,9 @@ export function pageEnter(el: Element | null) {
     translateY: [16, 0],
     duration: 420,
     ease: EASE_OUT,
+    onComplete: () => clearInlineTransforms(el),
   });
 }
-
-type AnimTargets = Element | Element[] | NodeList | null | undefined;
 
 /** Stagger de elementos (tarjetas, filas, chips). */
 export function staggerIn(targets: AnimTargets, delay = 40) {
@@ -33,6 +50,7 @@ export function staggerIn(targets: AnimTargets, delay = 40) {
     delay: stagger(delay),
     duration: 380,
     ease: EASE_OUT,
+    onComplete: () => clearInlineTransforms(targets),
   });
 }
 
@@ -48,6 +66,7 @@ export function modalIn(overlay: Element | null, panel: Element | null) {
       translateY: [14, 0],
       duration: 300,
       ease: EASE_OUT,
+      onComplete: () => clearInlineTransforms(panel),
     });
   }
 }
@@ -82,6 +101,7 @@ export function fieldsIn(targets: AnimTargets) {
     delay: stagger(35),
     duration: 320,
     ease: EASE_OUT,
+    onComplete: () => clearInlineTransforms(targets),
   });
 }
 

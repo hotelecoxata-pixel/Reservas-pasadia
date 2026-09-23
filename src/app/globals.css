@@ -4,8 +4,21 @@
   color-scheme: light;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   @apply bg-slate-100 text-slate-900 antialiased;
+}
+
+/* Inputs con min 16px en móvil: evita el auto-zoom de iOS al enfocar */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 /* Ajustes finos de FullCalendar */
@@ -33,4 +46,60 @@ body {
 .fc .fc-daygrid-day-number,
 .fc .fc-col-header-cell-cushion {
   @apply text-slate-700 no-underline;
+}
+
+/* ---------- FullCalendar en móvil ---------- */
+@media (max-width: 640px) {
+  /* Toolbar: nav propia arriba, título centrado debajo, vistas abajo */
+  .fc .fc-toolbar.fc-header-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk:first-child {
+    justify-content: space-between;
+  }
+  .fc .fc-toolbar-title {
+    font-size: 1rem;
+  }
+
+  /* Celdas compactas y sin saltos de página innecesarios */
+  .fc .fc-daygrid-day-number {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+  .fc .fc-daygrid-day-frame {
+    min-height: 52px;
+  }
+  .fc .fc-col-header-cell-cushion {
+    font-size: 0.7rem;
+    padding: 4px 2px;
+  }
+  /* Eventos: solo hora y nombre, sin desbordes */
+  .fc .fc-daygrid-event {
+    font-size: 0.68rem;
+    padding: 1px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .fc .fc-daygrid-day-top {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+  }
+  /* Los chips de cupo pasan debajo del número */
+  .fc .fc-daygrid-day-top > div {
+    flex-basis: 100%;
+  }
+  .fc .fc-scrollgrid {
+    font-size: 0.75rem;
+  }
 }

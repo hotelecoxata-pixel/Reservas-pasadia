@@ -171,6 +171,7 @@ export default function ReservationExtras({ reservationId, revision }: Props) {
               </ul>
             )}
             <form onSubmit={addComment} className="mt-2 flex gap-2">
+              {/* input con font 16px en móvil (globals.css) evita el zoom de iOS */}
               <input
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
@@ -203,32 +204,33 @@ export default function ReservationExtras({ reservationId, revision }: Props) {
         ) : (
           <>
             {attachments.length > 0 ? (
-              <ul className="mt-2 space-y-1.5">
+              <ul className="mt-2 grid grid-cols-3 gap-2">
                 {attachments.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
+                  <li key={a.id} className="relative overflow-hidden rounded-lg bg-slate-100">
                     <a
                       href={a.url}
                       onClick={(e) => {
                         e.preventDefault();
                         setViewer(a.url);
                       }}
-                      className="flex min-w-0 items-center gap-2 text-sm text-indigo-700 hover:underline"
+                      className="block"
+                      aria-label={`Ver ${a.filename}`}
                     >
-                      <Icon name="eye" size={14} className="shrink-0" />
-                      <span className="truncate">{a.filename}</span>
-                      <span className="shrink-0 text-[11px] text-slate-400">({formatSize(a.sizeBytes)})</span>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={a.url} alt={a.filename} className="h-20 w-full object-cover" loading="lazy" />
                     </a>
                     {isAdmin && (
                       <button
                         type="button"
                         onClick={() => removeAttachment(a.id)}
                         disabled={busy}
-                        className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        className="absolute right-1 top-1 rounded-md bg-white/90 p-1.5 text-slate-500 shadow hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                         aria-label={`Eliminar ${a.filename}`}
                       >
                         <Icon name="trash" size={13} />
                       </button>
                     )}
+                    <span className="block truncate px-1.5 py-1 text-[10px] text-slate-500">{a.filename}</span>
                   </li>
                 ))}
               </ul>
@@ -237,10 +239,11 @@ export default function ReservationExtras({ reservationId, revision }: Props) {
             )}
 
             <label
-              className={`mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-600 hover:border-indigo-400 hover:text-indigo-600 ${busy ? "pointer-events-none opacity-50" : ""}`}
+              className={`mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-3 text-sm text-slate-600 hover:border-indigo-400 hover:text-indigo-600 ${busy ? "pointer-events-none opacity-50" : ""}`}
             >
               <Icon name="plus" size={14} />
-              Adjuntar imagen (PNG, JPG o WebP — máx. 5 MB)
+              <span className="hidden sm:inline">Adjuntar imagen (PNG, JPG o WebP — máx. 5 MB)</span>
+              <span className="sm:hidden">Adjuntar imagen (máx. 5 MB)</span>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"

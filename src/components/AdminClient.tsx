@@ -29,7 +29,7 @@ export default function AdminClient({ eventTypes, users, currentUserId, channels
   }, []);
 
   return (
-    <div ref={containerRef} className="space-y-8">
+    <div ref={containerRef} className="space-y-6 sm:space-y-8">
       <section>
         <h1 className="text-xl font-bold text-slate-900">Administración</h1>
         <p className="text-sm text-slate-500">Cupos por tipo de evento, usuarios del personal y notificaciones.</p>
@@ -74,7 +74,7 @@ function EventTypesEditor({ eventTypes }: { eventTypes: EventTypeDTO[] }) {
   }
 
   return (
-    <section className="rounded-xl bg-white p-5 shadow-sm">
+    <section className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
       <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
         <Icon name="flame" size={18} className="text-indigo-600" />
         Tipos de evento y cupos
@@ -92,11 +92,13 @@ function EventTypesEditor({ eventTypes }: { eventTypes: EventTypeDTO[] }) {
 
       <div className="space-y-3">
         {items.map((t) => (
-          <div key={t.id} className="flex flex-wrap items-center gap-4 rounded-lg border border-slate-200 p-3">
-            <span className="inline-block h-4 w-4 rounded-full" style={{ backgroundColor: t.color }} />
-            <div className="min-w-[120px]">
-              <div className="font-medium text-slate-800">{t.name}</div>
-              <div className="text-xs text-slate-400">{t.code}</div>
+          <div key={t.id} className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+            <div className="flex items-center gap-3">
+              <span className="inline-block h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
+              <div className="min-w-[120px]">
+                <div className="font-medium text-slate-800">{t.name}</div>
+                <div className="text-xs text-slate-400">{t.code}</div>
+              </div>
             </div>
 
             <label className="flex items-center gap-2 text-sm">
@@ -123,7 +125,7 @@ function EventTypesEditor({ eventTypes }: { eventTypes: EventTypeDTO[] }) {
 
             <button
               onClick={() => save(t)}
-              className="ml-auto flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:ml-auto sm:w-auto sm:py-1.5"
             >
               {savedId === t.id ? (
                 <>
@@ -193,7 +195,7 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
   }
 
   return (
-    <section className="rounded-xl bg-white p-5 shadow-sm">
+    <section className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
         <Icon name="users" size={18} className="text-indigo-600" />
         Usuarios del personal
@@ -205,7 +207,7 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
         </p>
       )}
 
-      <div className="overflow-x-auto">
+      <div className="hidden overflow-x-auto sm:block">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
             <tr>
@@ -260,7 +262,50 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
         </table>
       </div>
 
-      <form onSubmit={createUser} className="mt-5 flex flex-wrap items-end gap-3 border-t border-slate-200 pt-4">
+      {/* Cards de usuarios (móvil) */}
+      <ul className="space-y-2 sm:hidden">
+        {list.map((u) => (
+          <li key={u.id} className={`rounded-lg border border-slate-200 p-3 ${u.active ? "" : "opacity-50"}`}>
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate font-medium text-slate-800">
+                  {u.name}
+                  {u.id === currentUserId && <span className="ml-1.5 text-xs text-indigo-500">(vos)</span>}
+                </p>
+                <p className="truncate text-xs text-slate-500">{u.email}</p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  u.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-600"
+                }`}
+              >
+                {u.active ? "Activo" : "Inactivo"}
+              </span>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <select
+                value={u.role}
+                onChange={(e) => changeRole(u, e.target.value as "ADMIN" | "STAFF")}
+                disabled={u.id === currentUserId}
+                className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-xs disabled:opacity-50"
+              >
+                <option value="STAFF">Recepción</option>
+                <option value="ADMIN">Administrador</option>
+              </select>
+              {u.id !== currentUserId && (
+                <button
+                  onClick={() => toggleActive(u)}
+                  className="shrink-0 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+                >
+                  {u.active ? "Desactivar" : "Activar"}
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <form onSubmit={createUser} className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-200 pt-4 sm:flex sm:flex-wrap sm:items-end sm:gap-3">
         <div>
           <label className="block text-xs font-medium text-slate-500">Nombre</label>
           <input
@@ -268,7 +313,7 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
             minLength={2}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
         </div>
         <div>
@@ -278,7 +323,7 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
         </div>
         <div>
@@ -289,7 +334,7 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
             type="password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
         </div>
         <div>
@@ -297,7 +342,7 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
           <select
             value={form.role}
             onChange={(e) => setForm({ ...form, role: e.target.value as "ADMIN" | "STAFF" })}
-            className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           >
             <option value="STAFF">Recepción</option>
             <option value="ADMIN">Administrador</option>
@@ -306,7 +351,7 @@ function UsersManager({ users, currentUserId }: { users: UserDTO[]; currentUserI
         <button
           type="submit"
           disabled={creating}
-          className="flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="col-span-2 flex items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 sm:w-auto sm:py-2"
         >
           <Icon name="plus" size={13} />
           {creating ? "Creando…" : "Agregar usuario"}
@@ -352,7 +397,7 @@ function NotificationsPanel({ channels }: { channels: { email: boolean; telegram
   }
 
   return (
-    <section className="rounded-xl bg-white p-5 shadow-sm">
+    <section className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
       <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
         <Icon name="bell" size={18} className="text-indigo-600" />
         Resumen diario
@@ -392,7 +437,7 @@ function NotificationsPanel({ channels }: { channels: { email: boolean; telegram
       <button
         onClick={sendNow}
         disabled={sending}
-        className="flex items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 sm:w-auto sm:py-2"
       >
         <Icon name="paper-plane" size={14} />
         {sending ? "Enviando…" : "Enviar resumen de hoy ahora"}

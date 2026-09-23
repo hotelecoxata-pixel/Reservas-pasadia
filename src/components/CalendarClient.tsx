@@ -126,7 +126,7 @@ export default function CalendarClient({ eventTypes, todayKey: _todayKey }: Prop
 
   return (
     <div ref={containerRef} className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div ref={chipWrapRef} className="flex flex-wrap items-center gap-2">
           {activeTypes.map((t) => {
             const hidden = hiddenTypeIds.has(t.id);
@@ -134,7 +134,7 @@ export default function CalendarClient({ eventTypes, todayKey: _todayKey }: Prop
               <button
                 key={t.id}
                 onClick={() => toggleType(t.id)}
-                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition sm:py-1.5 ${
                   hidden ? "border-slate-200 bg-white text-slate-400 line-through" : "border-transparent text-white"
                 }`}
                 style={hidden ? undefined : { backgroundColor: t.color }}
@@ -149,14 +149,15 @@ export default function CalendarClient({ eventTypes, todayKey: _todayKey }: Prop
         </div>
         <button
           onClick={() => openNew()}
-          className="flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="flex items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:py-2"
         >
           <Icon name="plus" size={14} />
-          Nueva reserva
+          <span className="sm:hidden">Nueva</span>
+          <span className="hidden sm:inline">Nueva reserva</span>
         </button>
       </div>
 
-      <div className="rounded-xl bg-white p-4 shadow-sm">
+      <div className="rounded-xl bg-white p-2 shadow-sm sm:p-4">
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

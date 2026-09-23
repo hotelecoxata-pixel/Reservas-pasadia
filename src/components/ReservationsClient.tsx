@@ -24,14 +24,16 @@ export default function ReservationsClient({ eventTypes }: Props) {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     pageEnter(containerRef.current);
   }, []);
 
-  // Animar filas cuando cambian los resultados
+  // Animar filas cuando cambian los resultados (tabla en desktop, cards en móvil)
   useEffect(() => {
     staggerIn(tableRef.current?.querySelectorAll("tbody tr"), 18);
+    staggerIn(listRef.current?.querySelectorAll("li"), 18);
   }, [results]);
 
   const search = useCallback(async () => {
@@ -86,8 +88,8 @@ export default function ReservationsClient({ eventTypes }: Props) {
 
   return (
     <div ref={containerRef} className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl bg-white p-4 shadow-sm">
-        <div className="relative min-w-[220px] flex-1">
+      <div className="grid grid-cols-2 gap-3 rounded-xl bg-white p-3 shadow-sm sm:flex sm:flex-wrap sm:items-end sm:gap-3 sm:p-4">
+        <div className="relative col-span-2">
           <label className="block text-xs font-medium text-slate-500">Buscar</label>
           <input
             value={q}
@@ -102,7 +104,7 @@ export default function ReservationsClient({ eventTypes }: Props) {
           <select
             value={eventTypeId}
             onChange={(e) => setEventTypeId(e.target.value)}
-            className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           >
             <option value="">Todos</option>
             {eventTypes.map((t) => (
@@ -117,7 +119,7 @@ export default function ReservationsClient({ eventTypes }: Props) {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           >
             <option value="">Todos</option>
             <option value="CONFIRMED">Confirmadas</option>
@@ -130,7 +132,7 @@ export default function ReservationsClient({ eventTypes }: Props) {
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
         </div>
         <div>
@@ -139,14 +141,15 @@ export default function ReservationsClient({ eventTypes }: Props) {
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
         </div>
       </div>
 
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
+      {/* Tabla (desktop) */}
+      <div className="hidden overflow-x-auto rounded-xl bg-white shadow-sm sm:block">
         <table ref={tableRef} className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
@@ -244,6 +247,79 @@ export default function ReservationsClient({ eventTypes }: Props) {
           </tbody>
         </table>
       </div>
+
+      {/* Cards (móvil) */}
+      <ul ref={listRef} className="space-y-2 sm:hidden">
+        {loading && <li className="rounded-xl bg-white px-4 py-8 text-center text-slate-400 shadow-sm">Cargando…</li>}
+        {!loading && results.length === 0 && (
+          <li className="rounded-xl bg-white px-4 py-8 text-center text-slate-400 shadow-sm">
+            Sin resultados. Probá ajustar los filtros.
+          </li>
+        )}
+        {!loading &&
+          results.map((r) => {
+            const t = typeById.get(r.eventTypeId);
+            return (
+              <li key={r.id} className={`rounded-xl bg-white p-3 shadow-sm ${r.status === "CANCELLED" ? "opacity-60" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-xs font-semibold text-white"
+                        style={{ backgroundColor: t?.color ?? "#94a3b8" }}
+                      >
+                        {t?.name ?? "—"}
+                      </span>
+                      <span className="text-xs font-medium text-slate-500">
+                        {r.date} · {r.startTime}
+                        {r.endTime ? `–${r.endTime}` : ""}
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate font-medium text-slate-900">{r.customerName}</p>
+                    <p className="text-xs text-slate-500">
+                      {r.peopleCount} pax
+                      {r.customerPhone ? ` · ${r.customerPhone}` : ""}
+                    </p>
+                    {r.notes && <p className="mt-1 line-clamp-2 text-xs text-slate-400">{r.notes}</p>}
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      r.status === "CONFIRMED" ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {r.status === "CONFIRMED" ? "Confirmada" : "Cancelada"}
+                  </span>
+                </div>
+                <div className="mt-2 flex gap-2 border-t border-slate-100 pt-2">
+                  <button
+                    onClick={() => {
+                      setEditing(r);
+                      setModalOpen(true);
+                    }}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-300 px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  >
+                    <Icon name="pencil" size={11} />
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => toggleStatus(r)}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-md border border-amber-300 px-2 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50"
+                  >
+                    <Icon name={r.status === "CONFIRMED" ? "xmark-circle" : "checkmark-circle"} size={11} />
+                    {r.status === "CONFIRMED" ? "Cancelar" : "Reactivar"}
+                  </button>
+                  <button
+                    onClick={() => remove(r)}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-md border border-red-200 px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                  >
+                    <Icon name="trash" size={11} />
+                    Eliminar
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+      </ul>
 
       <ReservationModal
         open={modalOpen}

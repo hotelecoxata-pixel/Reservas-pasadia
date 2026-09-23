@@ -106,8 +106,8 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <div ref={cardRef} className="w-full max-w-sm rounded-xl bg-white p-8 shadow-md">
+    <main className="flex min-h-dvh items-center justify-center px-4 py-8">
+      <div ref={cardRef} className="w-full max-w-sm rounded-xl bg-white p-6 shadow-md sm:p-8">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white">
             <Icon name="calendar" size={26} />
